@@ -1,10 +1,550 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Interactive Data Visualization for the Web: Using jsonio, libd3, and libhtml to create reusable D3js</title>
-</head>
-<body>
 
-</body>
+	<head>
+		<meta charset="utf-8">
+
+		<title>Interactive Data Visualization for the Web</title>
+
+		<meta name="description" content="Using jsonio, libd3, and libhtml to create reusable D3js">
+		<meta name="author" content="William R. Buchanan">
+		<meta name="institution" content="Fayette County Public Schools">
+		<meta name="title" content="Director of Data, Research, and Accountability">
+		<meta name="location" content="701 East Main Street, Lexington, KY 40502">
+		<meta name="contact" content="Billy.Buchanan@fayette.kyschools.us">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+        <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+
+		<script>
+			imgselect = function() {
+				var imgsel = d3.select("select#imgselector").property("value");
+				d3.select("img#image").attr("src", imgsel);
+			};
+		</script>
+
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Interactive Data Visualization for the Web</h1>
+					<h2>Using jsonio, libd3, and libhtml to create reusable D3js</h2>
+					<p>
+						<small><a href="https://github.com/wbuchanan">Billy Buchanan</a> </br>
+							Currently <a href="http://www.fcps.net/administration/departments/data">Director of Data, Research, and Accountability</a></br>
+							<a href="http://www.fcps.net/administration/departments/data">Fayette County Public Schools</a></br>
+
+							Formerly <a href="http://rea.mpls.k12.mn.us/">Data Scientist @ Minneapolis Public Schools</a>
+						</small>
+					</p>
+				</section>
+
+				<section>
+					<div>
+						<ul>
+							<li>A bit about interactive visualization in Stata</li>
+							<li>jsonio</li>
+							<li>libd3</li>
+							<li>libhtml</li>
+							<li>Putting it all together</li>
+						</ul>
+					</div>
+				</section>
+
+				<!-- Example of nested vertical slides -->
+				<section>
+					<section>
+						<h2>ffmpeg for animated graphs</h2>
+						<div>
+							<ul>
+								<li><a href="http://www.stata.com/meeting/uk12/abstracts/materials/uk12_grant.pptx">Robert Grant presents at 2012 UK Stata User's Group Meeting</a></li>
+								<li><a href="http://blog.stata.com/2014/03/24/how-to-create-animated-graphics-using-stata/">Chuck Huber posts blog on Stata's blog in 2014</a></li>
+								<li>Solution is nice for generating animations, but Stata is just creating the frames of the animation</li>
+								<li>Interactive in the sense that there is motion, but end users don't get to interact with the data itself</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>First iterations use Stata to generate "frames" of an animation</li>
+								<li>Interaction is limited to clicking a play button, but still provides something useful for some end users</li>
+								<li>No direct interaction with data and only represents a single piece of content</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<iframe width="1080" height="620" src="https://www.youtube.com/embed/WBD2VSVuaEU" frameborder="0" allowfullscreen></iframe>
+					</section>
+					<section>
+						<h2>Stata as graphics engine</h2>
+						<div>
+							<ul>
+								<li><a href="http://www.stata.com/statalist/archive/2014-03/msg00523.html">Austin Nichols shares some work related to publishing Stata graphs to the web</a></li>
+								<li>User interaction is simple (e.g., dropdown list used to select specific graphs) and provides a bit of user interaction</li>
+								<li>Solution still relies on Stata to generate multiple static images that are subsequently loaded/rendered</li>
+								<li>Interaction with the data is still relatively limited</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>There still isn't direct interaction with the data but using this menu approach provides a way to flip back and forth between views</li>
+								<li>If you use tuples you can create all the graph permutations and use this approach to move back and forth between them</li>
+								<li>Computationally intensive and doesn't scale well in terms of content generation</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<div>
+							<select onchange="imgselect()" id="imgselector" width="200" style="font-size:24px">Select the image to display:
+								<option value="media/badScatter.png">Bad Scatterplot</option>
+								<option value="media/uglyScatter.png">Ugly Scatterplot</option>
+								<option value="media/onePaletteToRuleThemAll1.png">Single palette Single layer brewscheme</option>
+								<option value="media/onePaletteToRuleThemAll2.png">Single palette Multiple layers brewscheme</option>
+								<option value="media/onePaletteToRuleTheRest1.png">Several Palettes with Default brewscheme</option>
+								<option value="media/myriadColorPalettes.png" selected=true>Myriad Colorpalettes brewscheme</option>
+								<option value="media/waterfallDefault.png">s2color Waterfall</option>
+								<option value="media/waterfallBrewScheme.png">brewscheme Waterfall</option>
+								<option value="media/sexWaterfallBrewscheme.png">brewscheme Waterfall by Sex</option>
+							</select>
+						</div>
+						<div>
+							<img id="image" width="1080" height="650" src="media/myriadColorPalettes.png">
+						</div>
+					</section>
+					<section>
+						<h2>Higher level abstractions</h2>
+						<div>
+							<ul>
+								<li><a href="http://www.stata.com/meeting/boston14/abstracts/materials/boston14_grant.pdf">Robert Grant's 2014 Stata Conference Presentation</a></li>
+								<li>Provides a higher level abstraction around <a href="https://d3js.org">D3.js</a> but flexibility of Stata's twoway commands make parsing and translating challenging</li>
+								<li>Solution now uses Stata to generate a single static HTML file with the data and JavaScript embedded in a single document</li>
+								<li>Much more interaction, but still limited by what was exposed to users via the APIs</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>Now we get some interaction with the data through tooltips, click, and/or hover events</li>
+								<li>Program writes the data object, HTML, and JavaScript which can be time consuming for large datasets to iterate over</li>
+								<li>limited ability for user customization</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2>Higher level abstractions</h2>
+						<div>
+							<ul>
+								<li><a href="http://www.stata.com/meeting/chicago16/">Chavez & Matsuoka (2016)</a> take things a step further towards integration with web technologies</li>
+								<li>With these advances there are still challenges to overcome:
+									<ul>
+										<li>Licensing requirements/restrictions</li>
+										<li>Decoupling of metadata and data</li>
+										<li>Extensibility</li>
+									</ul>
+								</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>At any time Google could say that their Chart API can only be used to display things in their platform in the same way that the Geocoding API requires the use of their maps</li>
+								<li>A CSV is great, but requires a trade off between memory conservation and metadata loss</li>
+								<li>To date the solutions available aren't necessarily extensible.</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2>A Different Approach to Integration</h2>
+						<div>
+							<ul>
+								<li>Use a modular approach for the different components</li>
+								<li>jsonio - Serialize/Deserialize JSON data</li>
+								<li>libd3 - Mirror <a href="https://d3js.org">D3.js</a> in Mata so migration less painful</li>
+								<li>libhtml - Library of Objects represent HTML elements</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>Create the data object once with all the data you may want to use</li>
+								<li>Encapsulate the HTML and JS content generation</li>
+								<li>Modularity = more flexibility to create new capabilities</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<div>
+							<ul>
+								<li>jsonio packages all of your data and metadata in a single JSON object so you don't lose variable labels or value labels</li>
+								<li>Want more flexibility from D3.js examples?  Use libd3 to create Mata functions that generate the D3 code to meet your needs</li>
+								<li>Need or want more control over the formatting?  Create the DOM elements directly with libhtml</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>Exporting to CSV requires a trade off between memory overhead and metadata, jsonio solves this trade-off for you</li>
+								<li>Abstractions built on the D3js library will inherently be limited to the values of the API designer, so users ability to create new graphs is limited to the priorities and values of the developer</li>
+								<li>We should be able to combine and structure our html document to meet our needs, not necessarily to meet the needs of a developer</li>
+							</ul>
+						</aside>
+					</section>
+				</section>
+
+				<section>
+					<section>
+					<h2>jsonio</h2>
+					<div>
+						<ul>
+							<li><a href="https://ideas.repec.org/c/boc/bocode/s457407.html">Current capabilities in Stata</a> focused only on consumption of json and has lead to many questions from users</li>
+							<li>I/O tool for using JSON data in Stata</li>
+							<li>Java plugin built on the <a href="https://github.com/FasterXML/jackson">Jackson JSON API</a> </li>
+							<li>Handles arbitrarily complex JSON consistently</li>
+							<li>Almost lossless export</li>
+						</ul>
+					</div>
+						<aside class="notes">
+							<ul>
+								<li>Jackson JSON API is fairly widely recognized as the most robust JSON processing library in Java</li>
+								<li>Currently, the Java API does not provide access to dataset characteristics or notes</li>
+								<li>First input iteration focuses in making it easier get flattened data that is queryable</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2>Deserialization</h2>
+						<h3>key-value mode</h3>
+						<pre>
+							<code>
+. // Load the same data into Stata in a key-value pair structure
+. jsonio kv, file("~/Desktop/waypointsResponse.json") ///
+  nourl elem("(legs_[0-9]/((start)|(end))_location/((lat)|(lng)))")
+							</code>
+<table>
+	<th>key</th><th>value</th>
+	<tr><td>/routes_1/legs_1/end_location/lat</td><td>42.378175</td></tr>
+<tr><td>/routes_1/legs_1/end_location/lng</td><td>-71.060226</td></tr>
+<tr><td>/routes_1/legs_1/start_location/lat</td><td>42.359824</td></tr>
+<tr><td>/routes_1/legs_1/start_location/lng</td><td>-71.059812</td></tr>
+<tr><td>/routes_1/legs_2/end_location/lat</td><td>42.442609</td></tr>
+<tr><td>/routes_1/legs_2/end_location/lng</td><td>-71.229336</td></tr>
+<tr><td>/routes_1/legs_2/start_location/lat</td><td>42.378175</td></tr>
+<tr><td>/routes_1/legs_2/start_location/lng</td><td>-71.060226</td></tr>
+<tr><td colspan="2">...</td></tr>
+</table>
+						</pre>
+						<aside class="notes">
+							<ul>
+								<li>Key-Value mode is a two-dimensional model similar to a long data structure</li>
+								<li>The key uses POSIX style path delimiters to separate the nodes so you are able to identify the structure of the underlying JSON</li>
+								<li>ID numbers are added to nodes to differentiate them in the payload (and hopefully in the future to provide more robust options to structure the payload in other formats)</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2>Deserialization</h2>
+						<h3>row-value mode</h3>
+						<pre>
+							<code>
+. // Load the same data into Stata in a key-value pair structure
+. jsonio rv, file("~/Desktop/waypointsResponse.json") ob(1) ///
+  nourl elem("(legs_[0-9]/((start)|(end))_location/((lat)|(lng)))")
+							</code>
+<table>
+	<th>Variable Name</th><th>storage type</th><th>display format</th><th>variable label</th>
+<tr><td>jsonvar1</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_1/end_location/lat</td></tr>
+<tr><td>jsonvar2</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_1/end_location/lng</td></tr>
+<tr><td>jsonvar3</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_1/start_location/lat</td></tr>
+<tr><td>jsonvar4</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_1/start_location/lng</td></tr>
+<tr><td>jsonvar5</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_2/end_location/lat</td></tr>
+<tr><td>jsonvar6</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_2/end_location/lng</td></tr>
+<tr><td>jsonvar7</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_2/start_location/lat</td></tr>
+<tr><td>jsonvar8</td><td>double</td><td>%10.0g</td><td>/routes_1/legs_2/start_location/lng</td></tr>
+<tr><td colspan="5">...</td></tr>
+</table>
+							</pre>
+						<aside class="notes">
+							<ul>
+								<li>More immediately robust if the payload uses multiple types</li>
+								<li>Flattens the json object into a single record</li>
+								<li>Adds variable labels containing the full node hierarchy similar to the key-value interface</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2>Serialization</h2>
+						<p>Close to lossless export of data and meta data is possible with jsonio</p>
+<pre>
+	<code>
+"data" : [{
+		...,
+		{
+    "mpg" : 17.0,
+    "price" : 11995.0,
+    "headroom" : 2.5,
+    "rep78" : 5.0,
+    "length" : 193.0,
+    "weight" : 3170.0,
+    "displacement" : 163.0,
+    "turn" : 37.0,
+    "trunk" : 14.0,
+    "make" : "Volvo 260",
+    "gear_ratio" : 2.9800000190734863,
+    "foreign" : 1.0
+  }, ... }],
+"variableTypeIsString" : {
+    "mpg" : false,
+    "price" : false,
+    "headroom" : false,
+    "rep78" : false,
+    "length" : false,
+    "weight" : false,
+    "displacement" : false,
+    "turn" : false,
+    "trunk" : false,
+    "make" : true,
+    "gear_ratio" : false,
+    "foreign" : false
+  },
+  "variableNames" : [ "make", "price", "mpg", "rep78", "headroom", "trunk", "weight", "length", "turn", "displacement", "gear_ratio", "foreign" ],
+  "variableLabels" : {
+    "mpg" : "Mileage (mpg)",
+    "price" : "Price",
+    "headroom" : "Headroom (in.)",
+    "rep78" : "Repair Record 1978",
+    "length" : "Length (in.)",
+    "weight" : "Weight (lbs.)",
+    "displacement" : "Displacement (cu. in.)",
+    "turn" : "Turn Circle (ft.) ",
+    "trunk" : "Trunk space (cu. ft.)",
+    "make" : "Make and Model",
+    "gear_ratio" : "Gear Ratio",
+    "foreign" : "Car type"
+  },
+  "valueLabelNames" : {
+    "foreign" : "origin"
+  },
+  "valueLabels" : {
+    "foreign" : {
+      "0" : "Domestic",
+      "1" : "Foreign"
+    }
+  }, ...
+	</code>
+</pre>
+						<aside class="notes">
+							<ul>
+								<li>We still lose notes and characteristics, but the most important metadata (e.g., value labels, variable labels, etc...) are retained</li>
+								<li>Structured specifically thinking about how to retain metadata for web visualizations</li>
+								<li>Easy to access metadata and create dynamic User Interfaces with the structure providing data for DOM manipulation</li>
+							</ul>
+						</aside>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>libd3</h2>
+						<div>
+							<ul>
+                                <li>libd3 has not been updated for the D3.js version 4 release, but this shouldn't be too much of an issue</li>
+								<li>Uses a fluent API design (e.g., you can chain method/function calls) to mirror the D3.js semantics as closely as possible</li>
+								<li>Purposefully tried to mirror the JavaScript API as closely as possible to make it easier to reuse existing code</li>
+								<li>There are a few notable exceptions to make sure things get processed correctly</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>Version 4 of D3.js first released on June 29th, way too late to try getting all the changes made</li>
+								<li>Tried to make sure the Mata library would mirror the semantics of the original library to facilitate code migration</li>
+								<li>Goal was never to provide an abstraction layer, but to provide the same low level tools in Stata with the hopes of generating recyclable code</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2>libd3 (differences)</h2>
+						<div>
+							<ul>
+								<li>To reference JavaScript objects from Mata, prefix the name of the object with <strong>obj_</strong></li>
+								<li>All functions/methods must be followed with parentheses</li>
+								<li>Although more difficult to reuse the same object multiple times, the d3 class does have a built-in undo button</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>The methods of the D3 class check argument types and for non-numeric arguments, an additional test is performed to check for the object prefix</li>
+								<li>Also has some pretty printing capabilities although they are fairly crude at this point</li>
+								<li>Purposefully isolated so others can use things as they wish/like</li>
+							</ul>
+						</aside>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>libhtml</h2>
+						<div>
+							<ul>
+								<li>Create HTML elements as Mata objects</li>
+								<li>Uses object inheritance to handle global HTML properties</li>
+								<li>Slightly limited by single inheritance model</li>
+								<li>Also uses a fluent API design to make it more convenient to generate HTML content tags</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>Mata processing is faster and allows end users to create their own framework which can use an .ado wrapper to interface with</li>
+								<li>Used a combination of webscraping and the flexibility of the Stata language for metaprogramming to automate the build on my end to some degree</li>
+								<li>Would be nice for a single object to inherit from both htmlglobal() and other objects that have specific shared properties for a subset of elements</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2></h2>
+						<div>
+							<ul>
+								<li>Lots of HTML elements now, so the installed package is just a shell that grabs the files from a server and compiles the mata library for you locally</li>
+								<li>Creating a library of low level objects gives everyone more flexibility to create and contribute to the community</li>
+								<li>Consistent method for adding content to HTML tags</li>
+							</ul>
+						</div>
+						<aside class="notes">
+							<ul>
+								<li>Made adding content consistent across all elements (e.g., .setClassArgs()), but beyond that it is not very abstracted</li>
+								<li>The libhtml ado literally downloads the Mata source code and then compiles it for you</li>
+								<li>A few elements have an "st" prefix due to overlap with existing reserved words</li>
+							</ul>
+						</aside>
+					</section>
+				</section>
+
+
+				<section>
+					<section>
+						<h2>Putting it all together</h2>
+					</section>
+					<section>
+						<div>
+							<p>Use jsonio to serialize data and write your HTML and JavaScript to create static graphs for the web</p>
+						</div>
+					</section>
+					<section>
+						<iframe src="https://wbuchanan.github.io/barGraphExample/" width="1080" height="650"></iframe>
+					</section>
+					<section>
+						<div>
+							<p>or to create slightly interactive graphs</p>
+						</div>
+					</section>
+					<section>
+						<iframe src="https://wbuchanan.github.io/histogramExample/" width="1080" height="650"></iframe>
+					</section>
+					<section>
+						<div>
+							<p>or to emphasize the <strong style="font-size: 84px">exploratory</strong> in EDA</p>
+						</div>
+					</section>
+					<section>
+						<iframe src="https://wbuchanan.github.io/scatterFilter" width="1080" height="650"></iframe>
+					</section>
+					<section>
+						<div>
+							<p>You can create Mata functions or Stata programs that generate the HTML and JavaScript for users to create simpler graphs directly in Stata</p>
+						</div>
+					</section>
+					<section>
+						<iframe allowtransparency="true" style="background: #FFFFFF;" src="http://www.paces-consulting.org/stata/scatterTip.html" width="1080" height="650"></iframe>
+					</section>
+					<section>
+						<div>
+							<p>And can also make graphs that are a bit more complex</p>
+						</div>
+					</section>
+					<section>
+						<iframe allowtransparency="true" style="background: #FFFFFF;" src="https://wbuchanan.github.io/d3mata-examples/splomExample.html" width="1080" height="650"></iframe>
+					</section>
+				</section>
+
+				<section data-autoslide="1750">
+					<p>Oh...and by the way...</p>
+				</section>
+				<section>
+				<br>
+					<h2>FCPS is Hiring!!!</h2>
+					<p>If you or anyone you know is interested in doing research work education </br></br>
+						<small style="font-size:10px">:::cough::: economics of education/psychometrics/program evaluation types :::cough::: </small> </br>
+						feel free to grab me at some point during the conference to tell me or email me: </br>
+						<a href="mailto:Billy.Buchanan@fayette.kyschools.us?subject=Job%20Stuff%20From%20Stata%20Conference">Billy.Buchanan@fayette.kyschools.us</a>
+				    </p>
+					<p>
+						You can also check <a href="http://www.fcps.net/administration/departments/human-resources/apply?all=1">The Fayette County Public School's Job Postings</a> to check and see if the positions are up/posted.
+					</p>
+					<aside class="notes">
+						<ul>
+							<li></li>
+							<li></li>
+							<li></li>
+						</ul>
+					</aside>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: false,
+				history: true,
+				center: true,
+                overview: true,
+                touch: true,
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+                transitionSpeed: 'slow',
+                backgroundTransition: 'fade',
+
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+        <script src="js/test.js"></script>
+	</body>
 </html>
